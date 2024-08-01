@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "contract"
+version = "0.0.1"
+description = "EVM compiler using NN."
+authors = ["apehex <apehex@protonmail.com>"]
+readme = ".github/README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.12"
+mlable = ">=0.7"
+tensorflow = ">=2.15"
+tokun = ">=0.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+huggingface-hub = {extras = ["cli"], version = ">=0.23"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
