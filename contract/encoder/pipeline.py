@@ -7,7 +7,7 @@ import tokun.pipeline
 
 # PREPROCESS ##################################################################
 
-def preprocess(inputs: tf.Tensor, token_dim: int, output_dim: int, batch_dim: int, sample_dim: int, features: list, separator: str='\x1d', padding_weight: float=0., sample_weights: bool=True, binary: bool=True) -> tf.data.Dataset:
+def preprocess(inputs: tf.Tensor, token_dim: int, output_dim: int, batch_dim: int, sample_dim: int, padding_weight: float=0., sample_weights: bool=True, binary: bool=True) -> tf.data.Dataset:
     # specialized operations
     __encode_i = functools.partial(tokun.pipeline.encode, token_size=token_dim, sample_size=sample_dim)
     __encode_o = functools.partial(mlable.ops.expand_base, base=2, depth=output_dim) if binary else functools.partial(tf.one_hot, depth=output_dim, axis=-1)
