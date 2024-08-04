@@ -5,7 +5,7 @@ import tensorflow as tf
 
 import tokun.model
 
-import contract.decoder.layers
+import revml.contract.decoder.layers
 
 # CONSTANTS ###################################################################
 
@@ -48,7 +48,7 @@ class Transformer(tf.keras.models.Model):
         # layers
         self._encoder = tokun.model.Encoder(token_dim=token_dim, encoding_dim=input_dim, embedding_dim=embed_dim, sequence_axis=1, feature_axis=-1, activation=activation, name='encoder')
         self._blocks = [
-            llaminate.layers.DecoderBlock(
+            revml.contract.decoder.layers.DecoderBlock(
                 num_heads=num_heads,
                 embed_dim=embed_dim,
                 head_dim=head_dim,
