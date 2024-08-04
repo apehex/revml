@@ -13,11 +13,11 @@ def preprocess(inputs: tf.Tensor, token_dim: int, output_dim: int, batch_dim: in
     __encode_o = functools.partial(mlable.ops.expand_base, base=2, depth=output_dim) if binary else functools.partial(tf.one_hot, depth=output_dim, axis=-1)
     __reshape = functools.partial(tf.reshape, shape=(batch_dim, 4 * sample_dim))
     # encode => (B, 4 * S,) int
-    __inputs, __targets = (__encode_i(__inputs), __encode_i(__targets))
+    __inputs = __encode_i(inputs)
     # reshape => (B, 4 * S,) int
-    __inputs, __targets = (__reshape(__inputs), __reshape(__targets))
+    __inputs = __reshape(__inputs)
     # binary encoding for the target classes
-    __inputs, __targets = __inputs, __encode_o(__targets)
+    __inputs, __targets = (__inputs, __encode_o(__targets))
     # enforce types
     __inputs, __targets = tf.cast(__inputs, dtype=tf.dtypes.int32), tf.cast(__targets, dtype=tf.dtypes.float32)
     # sequence mask to ignore padding during training
