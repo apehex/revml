@@ -17,7 +17,7 @@ def preprocess(inputs: tf.Tensor, token_dim: int, output_dim: int, batch_dim: in
     # reshape => (B, 4 * S,) int
     __inputs = __reshape(__inputs)
     # binary encoding for the target classes
-    __inputs, __targets = (__inputs, __encode_o(__targets))
+    __inputs, __targets = (__inputs, __encode_o(__inputs))
     # enforce types
     __inputs, __targets = tf.cast(__inputs, dtype=tf.dtypes.int32), tf.cast(__targets, dtype=tf.dtypes.float32)
     # sequence mask to ignore padding during training
