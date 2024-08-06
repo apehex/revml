@@ -1,5 +1,7 @@
 """llaminate model."""
 
+import functools
+
 import keras
 import tensorflow as tf
 
@@ -64,12 +66,9 @@ class Transformer(tf.keras.models.Model):
         # byte embedding
         __y = self._encoder(inputs)
         # blocks
-        for __block in self._blocks:
-            __y = __block(inputs=__y, attention_mask=attention_mask, **kwargs)
-        # normalize
-        __y = self._norm(__y)
-        # decompress
-        return self._decoder(__y)
+        __y = functools.reduce(lambda __x, __b: __b(inputs=__x, attention_mask=attention_mask, **kwargs), self._blocks, __y)
+        # normalize & decompress
+        return self._decoder(self._norm(__y))
 
     def get_config(self) -> dict:
         __config = super(Transformer, self).get_config()
