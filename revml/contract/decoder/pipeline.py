@@ -23,7 +23,7 @@ def _tokenize_bytecode(data: bytes, size: int) -> list:
     return __tokenized[:size] + (size - len(__tokenized)) * [0]
 
 def _tokenize_scalar(data: tf.Tensor, size: int, dtype: tf.dtypes.DType=tf.int32) -> tf.Tensor:
-    __data = _tokenize_bytecode(data=data.numpy(), size=size)
+    __data = _tokenize_bytecode(data=bytes.fromhex(data.numpy()), size=size)
     return tf.convert_to_tensor(__data, dtype=dtype)
 
 def tokenize(data: tf.Tensor, size: int, dtype: tf.dtypes.DType=tf.int32) -> tf.Tensor:
@@ -49,7 +49,7 @@ def preprocess(inputs: tf.Tensor, token_dim: int, output_dim: int, batch_dim: in
     __encode_o = functools.partial(mlable.ops.expand_base, base=2, depth=output_dim) if binary else functools.partial(tf.one_hot, depth=output_dim, axis=-1)
     __reshape = functools.partial(tf.reshape, shape=(batch_dim, sample_dim))
     # (input, target) where target is the next token for each input
-    __inputs, __targets = (tokun.pipeline.offset(data=inputs, ticks=1), inputs) # \x00 is one instruction
+    __inputs, __targets = (tokun.pipeline.offset(data=inputs, ticks=token_dim // 33), inputs) # \x00 is one instruction
     # tokenize => (B, 33 * T) = (B, S) int
     __inputs, __targets = (__encode_i(__inputs), __encode_i(__targets))
     # enforce shapes
