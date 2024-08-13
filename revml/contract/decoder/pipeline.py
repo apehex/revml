@@ -7,6 +7,12 @@ import tokun.pipeline
 
 import revml.contract.decoder.bytecode
 
+# RESHAPE #####################################################################
+
+def chunk(seq: list, size: int, repeats: bool=True) -> list:
+    __chunks = (seq[__i:__i+size] for __i in range(0, len(seq), size))
+    return list(__chunks if repeats else set(__chunks))
+
 # OFFSET ######################################################################
 
 def offset(data: tf.Tensor, ticks: int=1) -> tf.Tensor:
@@ -44,14 +50,24 @@ def tokenize_factory(size: int, dtype: tf.dtypes.DType=tf.int32) -> callable:
 
 # DETOKENIZE ##################################################################
 
-def _detokenize_instruction(data: list) -> list:
-    return data
+def _detokenize_instruction(data: list) -> str:
+    __opcode = data[0]
+    __length = revml.contract.decoder.bytecode.data_length(__opcode)
+    __data = data[len(data) - __length:]
+    return bytes([__opcode] + __data).hex() if (__opcode > 0) else '' # skip the padding
 
-def _detokenize_scalar(data: tf.Tensor) -> list:
-    return data
+def _detokenize_bytecode(data: list) -> str:
+    __instructions = chunk(seq=data, size=33, repeats= True)
+    return ''.join(_detokenize_instruction(__i) for __i in __instructions)
 
+def _detokenize_scalar(data: tf.Tensor) -> tf.Tensor:
+    __bytes = tf.get_static_value(data).tolist()
+    __data = _detokenize_bytecode(__bytes)
+    return tf.convert_to_tensor(__data, dtype=tf.string)
+
+@tf.py_function(Tout=tf.string)
 def detokenize(data: tf.Tensor) -> tf.Tensor:
-    return data
+    return _detokenize_scalar(data) if (int(tf.rank(data)) <= 1) else tf.map_fn(_detokenize_scalar, data, fn_output_signature=tf.string)
 
 # > ###########################################################################
 

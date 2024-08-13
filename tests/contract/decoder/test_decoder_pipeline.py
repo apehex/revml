@@ -50,6 +50,42 @@ class TokenizeTest(tf.test.TestCase):
         self.assertAllEqual(self._t0[-32:], tf.zeros((32,)))
         self.assertAllEqual(self._t1[-32:], tf.zeros((32,)))
 
+# DETOKENIZATION ##############################################################
+
+class DetokenizeTest(tf.test.TestCase):
+    def setUp(self):
+        super(DetokenizeTest, self).setUp()
+        # scalar inputs
+        self._b0 = bytes.fromhex('6eb3f879cb30fe243b4dfee438691c043318585733ff')
+        self._b1 = bytes.fromhex('756eb3f879cb30fe243b4dfee438691c043318585733ff6000526016600af3')
+        self._x0 = tf.convert_to_tensor(self._b0.hex(), dtype=tf.string)
+        self._x1 = tf.convert_to_tensor(self._b1.hex(), dtype=tf.string)
+        self._x = tf.convert_to_tensor([self._b0.hex(), self._b1.hex()], dtype=tf.string)
+        # fn
+        self._fn = revml.contract.decoder.pipeline.tokenize_factory(size=33 * 8, dtype=tf.uint8)
+        # tokenized
+        self._t0 = self._fn(self._x0)
+        self._t1 = self._fn(self._x1)
+        self._t = self._fn(self._x)
+        # detokenized
+        self._d0 = revml.contract.decoder.pipeline.detokenize(self._t0)
+        self._d1 = revml.contract.decoder.pipeline.detokenize(self._t1)
+        self._d = revml.contract.decoder.pipeline.detokenize(self._t)
+
+    def test_metadata(self):
+        assert list(self._d0.shape) == []
+        assert list(self._d1.shape) == []
+        assert list(self._d.shape) == [2]
+        assert self._d0.dtype == tf.string
+        assert self._d1.dtype == tf.string
+        assert self._d.dtype == tf.string
+
+    def test_reciprocity(self):
+        # the last instruction is not a push => null data
+        self.assertEqual(self._x0, self._d0)
+        self.assertEqual(self._x1, self._d1)
+        self.assertAllEqual(self._x, self._d)
+
 # PREPROCESSING ###############################################################
 
 class PreprocessTest(tf.test.TestCase):
