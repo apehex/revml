@@ -27,8 +27,11 @@ is_push = lambda opcode: opcode >= PUSH0 and opcode <= PUSH32
 
 # INSTRUCTIONS ################################################################
 
+def data_length(opcode: int) -> int:
+    return is_push(opcode) * (opcode - PUSH0) # 0 if the opcode is not a push
+
 def instruction_length(opcode: int) -> int:
-    return 1 + is_push(opcode) * (opcode - PUSH0) # 1 byte for the opcode + n bytes of data
+    return 1 + data_length(opcode) # 1 byte for the opcode + n bytes of data
 
 def iterate_over_instructions(bytecode: bytes) -> iter:
     __i = 0
