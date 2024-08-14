@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "revml"
-version = "0.0.4"
+version = "0.0.5"
 description = "EVM (de)compiler using NN."
 authors = ["apehex <apehex@protonmail.com>"]
 readme = ".github/README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10, <3.12"
+python = ">=3.10, <3.13"
 tensorflow = ">=2.15"
 mlable = {path = "../mlable/", develop = true} # mlable = ">=0.7"
 tokun = {path = "../tokun/", develop = true} # tokun = ">=0.10"

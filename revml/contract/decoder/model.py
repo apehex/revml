@@ -11,12 +11,12 @@ import revml.contract.decoder.layers
 
 # CONSTANTS ###################################################################
 
-EPSILON = 1e-5
+EPSILON = 1e-6
 
-# WITHOUT CACHE ###############################################################
+# DECODING ONLY ###############################################################
 
 @keras.saving.register_keras_serializable(package='models')
-class Transformer(tf.keras.models.Model):
+class SelfTransformer(tf.keras.models.Model):
     def __init__(
         self,
         num_layers: int,
@@ -33,7 +33,7 @@ class Transformer(tf.keras.models.Model):
         **kwargs
     ) -> None:
         # init
-        super(Transformer, self).__init__(**kwargs)
+        super(SelfTransformer, self).__init__(**kwargs)
         # config
         self._config = {
             'num_layers': num_layers,
@@ -50,7 +50,7 @@ class Transformer(tf.keras.models.Model):
         # layers
         self._encoder = tokun.model.Encoder(token_dim=token_dim, encoding_dim=input_dim, embedding_dim=embed_dim, sequence_axis=1, feature_axis=-1, activation=activation, name='encoder')
         self._blocks = [
-            revml.contract.decoder.layers.DecoderBlock(
+            revml.contract.decoder.layers.SelfDecoderBlock(
                 num_heads=num_heads,
                 embed_dim=embed_dim,
                 head_dim=head_dim,
@@ -70,7 +70,7 @@ class Transformer(tf.keras.models.Model):
         return self._decoder(__y)
 
     def get_config(self) -> dict:
-        __config = super(Transformer, self).get_config()
+        __config = super(SelfTransformer, self).get_config()
         __config.update(self._config)
         return __config
 
