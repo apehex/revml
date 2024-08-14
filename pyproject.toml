@@ -18,6 +18,9 @@ pytest = "*"
 datasets = ">= 2.20"
 tensorflow-datasets = ">=4.9"
 
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
