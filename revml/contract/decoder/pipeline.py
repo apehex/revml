@@ -71,13 +71,15 @@ def detokenize(data: tf.Tensor) -> tf.Tensor:
 
 # > ###########################################################################
 
-def preprocess(inputs: tf.Tensor, token_dim: int, output_dim: int, batch_dim: int, sample_dim: int, padding_weight: float=0., sample_weights: bool=True, binary: bool=True) -> tuple:
+def preprocess(inputs: tf.Tensor, token_dim: int, output_dim: int, batch_dim: int, sample_dim: int, padding_weight: float=0., sample_weights: bool=True, binary: bool=True, encoder: callable=None) -> tuple:
     # specialized operations
     __encode_i = tokenize_factory(size=sample_dim, dtype=tf.int32)
     __encode_o = functools.partial(mlable.ops.expand_base, base=2, depth=output_dim) if binary else functools.partial(tf.one_hot, depth=output_dim, axis=-1)
     __reshape = functools.partial(tf.reshape, shape=(batch_dim, sample_dim))
+    # fetch the relevant features
+    __inputs, __contexts = inputs['creation_bytecode'], inputs['creation_sourcecode']
     # (input, target) where target is the next token for each input
-    __inputs, __targets = (offset(data=inputs, ticks=token_dim // 33), inputs) # \x00 is one instruction
+    __inputs, __targets = (offset(data=__inputs, ticks=token_dim // 33), __inputs) # \x00 is one instruction
     # tokenize => (B, 33 * T) = (B, S) int
     __inputs, __targets = (__encode_i(__inputs), __encode_i(__targets))
     # enforce shapes
@@ -91,6 +93,8 @@ def preprocess(inputs: tf.Tensor, token_dim: int, output_dim: int, batch_dim: in
     __weights = mlable.ops.reduce_any(data=__weights, group=33, axis=-1, keepdims=True) # instruction level mask, but expressed byte by byte
     __weights = tf.cast(__weights, dtype=__targets.dtype)
     __weights = __weights + padding_weight * (1. - __weights)
+    # encode the context
+    __inputs = (__inputs, encoder(__contexts)) if (encoder is not None) else __inputs
     # chain the operations
     return (__inputs, __targets, __weights) if sample_weights else (__inputs, __targets)
 

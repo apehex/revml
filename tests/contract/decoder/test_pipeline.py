@@ -92,8 +92,8 @@ class PreprocessTest(tf.test.TestCase):
     def setUp(self):
         super(PreprocessTest, self).setUp()
         # preprocessing config
-        self._config_categorical = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33 * 2, 'output_dim': 256, 'padding_weight': 0.0, 'sample_weights': True, 'binary': False}
-        self._config_binary = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33 * 2, 'output_dim': 8, 'padding_weight': 0.0, 'sample_weights': True, 'binary': True}
+        self._config_categorical = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33 * 2, 'output_dim': 256, 'padding_weight': 0.0, 'sample_weights': True, 'binary': False, 'encoder': None,}
+        self._config_binary = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33 * 2, 'output_dim': 8, 'padding_weight': 0.0, 'sample_weights': True, 'binary': True, 'encoder': None,}
         # specialized preprocessing fn
         self._preprocess_categorical = functools.partial(revml.contract.decoder.pipeline.preprocess, **self._config_categorical)
         self._preprocess_binary = functools.partial(revml.contract.decoder.pipeline.preprocess, **self._config_binary)
@@ -106,7 +106,9 @@ class PreprocessTest(tf.test.TestCase):
         __b5 = b'2199ef7a217e1a55c1dfff22eb3a60af6fcdc91126d1dc7cbd6711c50a624cc0'
         __b6 = b'ce83d7b0b2a7fd96dc7ca8bf02d85b6b9acd71641f20080326d37421c296e9e2'
         __b7 = b'60008060008034415af1'
-        self._dataset_before = tf.data.Dataset.from_tensor_slices([__b0, __b1, __b2, __b3, __b4, __b5, __b6, __b7,])
+        self._dataset_before = tf.data.Dataset.from_tensor_slices({
+            'creation_bytecode': [__b0, __b1, __b2, __b3, __b4, __b5, __b6, __b7,],
+            'creation_sourcecode': 8 * [b'']})
         # preprocessed datasets
         self._dataset_categorical = self._dataset_before.batch(self._config_categorical['batch_dim']).map(self._preprocess_categorical)
         self._dataset_binary = self._dataset_before.batch(self._config_categorical['batch_dim']).map(self._preprocess_binary)
