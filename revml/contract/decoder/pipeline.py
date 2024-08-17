@@ -18,6 +18,18 @@ def chunk(seq: list, size: int, repeats: bool=True) -> list:
 def offset(data: tf.Tensor, ticks: int=1) -> tf.Tensor:
     return tf.convert_to_tensor([ticks * b'00']) + data # 0x00 is a single byte = a single EVM instruction
 
+# MASK ########################################################################
+
+def mask_padding(data: tf.Tensor, group: int, dtype: tf.dtypes.DType=tf.float32, padding_value: int=0, padding_weight: float=0., data_weight: float=1.) -> tf.Tensor:
+    # byte level mask
+    __weights = tf.not_equal(data, padding_value)
+    # instruction level mask, but expressed byte by byte
+    __weights = mlable.ops.reduce_any(data=__weights, group=group, axis=-1, keepdims=True)
+    # cast from bool to allow multiplications
+    __weights = tf.cast(__weights, dtype=dtype)
+    # rescale the weights
+    return data_weight * __weights + padding_weight * (1. - __weights)
+
 # TOKENIZE ####################################################################
 
 def _tokenize_data(data: bytes) -> list:
@@ -89,10 +101,7 @@ def preprocess(inputs: tf.Tensor, token_dim: int, output_dim: int, batch_dim: in
     # enforce types
     __inputs, __targets = tf.cast(__inputs, dtype=tf.dtypes.int32), tf.cast(__targets, dtype=tf.dtypes.float32)
     # sequence mask to ignore padding during training
-    __weights = tf.not_equal(__inputs, 0) # byte level mask
-    __weights = mlable.ops.reduce_any(data=__weights, group=33, axis=-1, keepdims=True) # instruction level mask, but expressed byte by byte
-    __weights = tf.cast(__weights, dtype=__targets.dtype)
-    __weights = __weights + padding_weight * (1. - __weights)
+    __weights = mask_padding(data=__inputs, group=33, dtype=__targets.dtype, padding_value=0, padding_weight=padding_weight, data_weight=1.)
     # encode the context
     __inputs = (__inputs, encoder(__contexts)) if (encoder is not None) else __inputs
     # chain the operations
