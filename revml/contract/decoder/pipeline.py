@@ -126,7 +126,7 @@ def _formatter_factory(decoder_config: dict, encoder_config: dict) -> callable:
     __cast_o = functools.partial(tf.cast, dtype=tf.float32)
     # enforce shapes
     __reshape_i = functools.partial(tf.reshape, shape=(decoder_config['batch_dim'], decoder_config['sample_dim']))
-    __reshape_c = functools.partial(tf.reshape, shape=(encoder_config['batch_dim'], encoder_config['sample_dim']))
+    __reshape_c = functools.partial(tf.reshape, shape=(encoder_config['batch_dim'], (encoder_config['sample_dim'] // encoder_config['token_dim']), encoder_config['embed_dim']))
     __reshape_o = functools.partial(tf.reshape, shape=(decoder_config['batch_dim'], decoder_config['sample_dim']))
     # decompose the output probabilities
     __prediction_b = functools.partial(mlable.ops.expand_base, depth=decoder_config['output_dim'], base=2)

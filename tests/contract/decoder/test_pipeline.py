@@ -1,8 +1,11 @@
 import functools
+import math
 
 import tensorflow as tf
 
 import mlable.sampling
+import tokun.model
+
 import revml.contract.decoder.pipeline
 
 # TOKENIZATION ################################################################
@@ -92,12 +95,14 @@ class PreprocessTest(tf.test.TestCase):
     def setUp(self):
         super(PreprocessTest, self).setUp()
         # preprocessing config
-        self._config_encoder = {'batch_dim': 4, 'sample_dim': 4 * 512, 'token_dim': 64}
-        self._config_decoder_categorical    = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33 * 2, 'output_dim': 256, 'padding_weight': 0.,}
-        self._config_decoder_binary         = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33 * 2, 'output_dim': 8, 'padding_weight': 0.,}
+        self._config_encoder = {'batch_dim': 4, 'sample_dim': 4 * 512, 'token_dim': 64, 'embed_dim': 256}
+        self._config_decoder_categorical = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33 * 2, 'output_dim': 256, 'padding_weight': 0.,}
+        self._config_decoder_binary = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33 * 2, 'output_dim': 8, 'padding_weight': 0.,}
+        # encoder model
+        self._encoder = tokun.model.AutoEncoder(token_dim=[4, 4, 4], input_dim=256, embedding_dim=256, output_dim=8, output='binary')
         # specialized preprocessing fn
         self._preprocess_categorical = revml.contract.decoder.pipeline.preprocess_factory(decoder_config=self._config_decoder_categorical, encoder_config=self._config_encoder, encoder_model=None)
-        self._preprocess_binary = revml.contract.decoder.pipeline.preprocess_factory(decoder_config=self._config_decoder_binary, encoder_config=self._config_encoder, encoder_model=None)
+        self._preprocess_binary = revml.contract.decoder.pipeline.preprocess_factory(decoder_config=self._config_decoder_binary, encoder_config=self._config_encoder, encoder_model=self._encoder._encoder)
         # original dataset
         __b0 = b'3d602d80600a3d3981f3363d3d373d3d3d363d7339778bc77bd7a9456655b19fd4c5d0bf2071104e5af43d82803e903d91602b57fd5bf3'
         __b1 = b'7f602036038060203d373d3d3d923d343d355af13d82803e903d91601e57fd5bf33d5260203df3'
@@ -109,7 +114,7 @@ class PreprocessTest(tf.test.TestCase):
         __b7 = b'60008060008034415af1'
         self._dataset_before = tf.data.Dataset.from_tensor_slices({
             'creation_bytecode': [__b0, __b1, __b2, __b3, __b4, __b5, __b6, __b7,],
-            'creation_sourcecode': 8 * [b'']})
+            'creation_sourcecode': 8 * [256 * b'a']})
         # preprocessed datasets
         self._dataset_categorical = self._dataset_before.batch(self._config_decoder_categorical['batch_dim'], drop_remainder=True).map(self._preprocess_categorical)
         self._dataset_binary = self._dataset_before.batch(self._config_decoder_binary['batch_dim'], drop_remainder=True).map(self._preprocess_binary)
@@ -122,11 +127,13 @@ class PreprocessTest(tf.test.TestCase):
         self.assertEqual(__inputs_spec.dtype, tf.dtypes.int32)
         self.assertEqual(__targets_spec.dtype, tf.dtypes.float32)
         self.assertEqual(__weights_spec.dtype, tf.dtypes.float32)
-        __inputs_spec, __targets_spec, __weights_spec = self._dataset_binary.element_spec
+        (__inputs_spec, __contexts_spec), __targets_spec, __weights_spec = self._dataset_binary.element_spec
         self.assertEqual(__inputs_spec.shape, (self._config_decoder_binary['batch_dim'], self._config_decoder_binary['sample_dim']))
+        self.assertEqual(__contexts_spec.shape, (self._config_encoder['batch_dim'], self._config_encoder['sample_dim'] // self._config_encoder['token_dim'], self._config_encoder['embed_dim']))
         self.assertEqual(__targets_spec.shape, (self._config_decoder_binary['batch_dim'], self._config_decoder_binary['sample_dim'], self._config_decoder_binary['output_dim']))
         self.assertEqual(__weights_spec.shape, (self._config_decoder_binary['batch_dim'], self._config_decoder_binary['sample_dim']))
         self.assertEqual(__inputs_spec.dtype, tf.dtypes.int32)
+        self.assertEqual(__contexts_spec.dtype, tf.dtypes.float32)
         self.assertEqual(__targets_spec.dtype, tf.dtypes.float32)
         self.assertEqual(__weights_spec.dtype, tf.dtypes.float32)
 
@@ -141,7 +148,7 @@ class PreprocessTest(tf.test.TestCase):
         # binary
         __batch = iter(self._dataset_binary)
         for _ in range(2):
-            __x, __y, __m = next(__batch)
+            (__x, __c), __y, __m = next(__batch)
             __y = mlable.sampling.binary(__y)
             self.assertAllEqual(__x[:, :self._config_decoder_categorical['token_dim']], tf.zeros((self._config_decoder_categorical['batch_dim'], self._config_decoder_categorical['token_dim'])))
             self.assertAllEqual(__x[:, self._config_decoder_categorical['token_dim']:2 * self._config_decoder_categorical['token_dim']], __y[:, :self._config_decoder_categorical['token_dim']])
@@ -160,7 +167,7 @@ class PreprocessTest(tf.test.TestCase):
         # binary
         __batch = iter(self._dataset_binary)
         for _ in range(2):
-            __x, __y, __m = next(__batch)
+            (__x, __c), __y, __m = next(__batch)
             __y = mlable.sampling.binary(__y)
             __x = tf.cast(__x, dtype=tf.dtypes.int32)
             __m = tf.cast(__m, dtype=tf.dtypes.int32)
