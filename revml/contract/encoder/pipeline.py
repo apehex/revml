@@ -11,7 +11,7 @@ def preprocess(inputs: tf.Tensor, token_dim: int, output_dim: int, batch_dim: in
     # specialized operations
     __encode_i = functools.partial(tokun.pipeline.encode, token_size=token_dim, sample_size=sample_dim)
     __encode_o = functools.partial(mlable.ops.expand_base, base=2, depth=output_dim) if binary else functools.partial(tf.one_hot, depth=output_dim, axis=-1)
-    __reshape = functools.partial(tf.reshape, shape=(batch_dim, 4 * sample_dim))
+    __reshape = functools.partial(tf.reshape, shape=(batch_dim, sample_dim))
     # encode => (B, 4 * S,) int
     __inputs = __encode_i(inputs)
     # reshape => (B, 4 * S,) int

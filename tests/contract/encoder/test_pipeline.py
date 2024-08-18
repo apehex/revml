@@ -12,8 +12,8 @@ class PreprocessTest(tf.test.TestCase):
     def setUp(self):
         super(PreprocessTest, self).setUp()
         # preprocessing config
-        self._config_categorical = {'batch_dim': 8, 'sample_dim': 512, 'token_dim': 16, 'output_dim': 256, 'padding_weight': 0.0, 'sample_weights': True, 'binary': False}
-        self._config_binary = {'batch_dim': 8, 'sample_dim': 512, 'token_dim': 16, 'output_dim': 8, 'padding_weight': 0.0, 'sample_weights': True, 'binary': True}
+        self._config_categorical = {'batch_dim': 8, 'sample_dim': 4 * 512, 'token_dim': 16, 'output_dim': 256, 'padding_weight': 0.0, 'sample_weights': True, 'binary': False}
+        self._config_binary = {'batch_dim': 8, 'sample_dim': 4 * 512, 'token_dim': 16, 'output_dim': 8, 'padding_weight': 0.0, 'sample_weights': True, 'binary': True}
         # specialized preprocessing fn
         self._preprocess_categorical = functools.partial(revml.contract.encoder.pipeline.preprocess, **self._config_categorical)
         self._preprocess_binary = functools.partial(revml.contract.encoder.pipeline.preprocess, **self._config_binary)
@@ -26,16 +26,16 @@ class PreprocessTest(tf.test.TestCase):
 
     def test_specs(self):
         __inputs_spec, __targets_spec, __weights_spec = self._dataset_categorical.element_spec
-        self.assertEqual(__inputs_spec.shape, (self._config_categorical['batch_dim'], 4 * self._config_categorical['sample_dim']))
-        self.assertEqual(__targets_spec.shape, (self._config_categorical['batch_dim'], 4 * self._config_categorical['sample_dim'], self._config_categorical['output_dim']))
-        self.assertEqual(__weights_spec.shape, (self._config_categorical['batch_dim'], 4 * self._config_categorical['sample_dim']))
+        self.assertEqual(__inputs_spec.shape, (self._config_categorical['batch_dim'], self._config_categorical['sample_dim']))
+        self.assertEqual(__targets_spec.shape, (self._config_categorical['batch_dim'], self._config_categorical['sample_dim'], self._config_categorical['output_dim']))
+        self.assertEqual(__weights_spec.shape, (self._config_categorical['batch_dim'], self._config_categorical['sample_dim']))
         self.assertEqual(__inputs_spec.dtype, tf.dtypes.int32)
         self.assertEqual(__targets_spec.dtype, tf.dtypes.float32)
         self.assertEqual(__weights_spec.dtype, tf.dtypes.float32)
         __inputs_spec, __targets_spec, __weights_spec = self._dataset_binary.element_spec
-        self.assertEqual(__inputs_spec.shape, (self._config_binary['batch_dim'], 4 * self._config_binary['sample_dim']))
-        self.assertEqual(__targets_spec.shape, (self._config_binary['batch_dim'], 4 * self._config_binary['sample_dim'], self._config_binary['output_dim']))
-        self.assertEqual(__weights_spec.shape, (self._config_binary['batch_dim'], 4 * self._config_binary['sample_dim']))
+        self.assertEqual(__inputs_spec.shape, (self._config_binary['batch_dim'], self._config_binary['sample_dim']))
+        self.assertEqual(__targets_spec.shape, (self._config_binary['batch_dim'], self._config_binary['sample_dim'], self._config_binary['output_dim']))
+        self.assertEqual(__weights_spec.shape, (self._config_binary['batch_dim'], self._config_binary['sample_dim']))
         self.assertEqual(__inputs_spec.dtype, tf.dtypes.int32)
         self.assertEqual(__targets_spec.dtype, tf.dtypes.float32)
         self.assertEqual(__weights_spec.dtype, tf.dtypes.float32)
