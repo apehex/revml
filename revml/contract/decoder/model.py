@@ -126,11 +126,13 @@ class CrossTransformer(tf.keras.models.Model):
             for __i in range(num_layers)]
         self._decoder = tokun.model.Decoder(token_dim=token_dim[::-1], encoding_dim=output_dim, embedding_dim=embed_dim, sequence_axis=1, feature_axis=-1, activation=activation, output=output, name='decoder')
 
-    def call(self, inputs: tf.Tensor, contexts: tf.Tensor, attention_mask: tf.Tensor=None, **kwargs) -> tf.Tensor:
+    def call(self, inputs: tuple, attention_mask: tf.Tensor=None, **kwargs) -> tf.Tensor:
+        # unpack
+        __inputs, __contexts = inputs
         # compress the inputs
-        __y = self._encoder(inputs)
+        __y = self._encoder(__inputs)
         # blocks
-        __y = functools.reduce(lambda __x, __b: __b(inputs=__x, contexts=contexts, attention_mask=attention_mask, **kwargs), self._blocks, __y)
+        __y = functools.reduce(lambda __x, __b: __b(inputs=__x, contexts=__contexts, attention_mask=attention_mask, **kwargs), self._blocks, __y)
         # decompress
         return self._decoder(__y)
 
