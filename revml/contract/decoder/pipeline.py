@@ -66,7 +66,7 @@ def _detokenize_instruction(data: list) -> str:
     __opcode = data[0]
     __length = revml.contract.decoder.bytecode.data_length(__opcode)
     __data = data[len(data) - __length:]
-    return bytes([__opcode] + __data).hex() if (__opcode > 0) else '' # skip the padding
+    return bytes([__opcode] + __data).hex() # if (__opcode > 0) else '' # skip the padding
 
 def _detokenize_bytecode(data: list) -> str:
     __instructions = chunk(seq=data, size=33, repeats= True)
