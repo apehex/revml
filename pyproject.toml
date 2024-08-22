@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "revml"
-version = "0.3.0"
+version = "0.4.0"
 description = "EVM (de)compiler using NN."
 authors = ["apehex <apehex@protonmail.com>"]
 readme = ".github/README.md"
@@ -9,7 +9,7 @@ readme = ".github/README.md"
 python = ">=3.10, <3.13"
 tensorflow = ">=2.15"
 mlable = {path = "../mlable/", develop = true} # mlable = ">=0.7"
-tokun = {path = "../tokun/", develop = true} # tokun = ">=0.12"
+tokun = {path = "../tokun/", develop = true} # tokun = ">=0.13"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"

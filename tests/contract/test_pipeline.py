@@ -6,7 +6,7 @@ import tensorflow as tf
 import mlable.sampling
 import tokun.model
 
-import revml.contract.decoder.pipeline
+import revml.contract.pipeline
 
 # TOKENIZATION ################################################################
 
@@ -19,7 +19,7 @@ class TokenizeTest(tf.test.TestCase):
         self._x0 = tf.convert_to_tensor(self._b0.hex(), dtype=tf.string)
         self._x1 = tf.convert_to_tensor(self._b1.hex(), dtype=tf.string)
         # fn
-        self._fn = revml.contract.decoder.pipeline.tokenize_factory(size=33 * 8, dtype=tf.uint8)
+        self._fn = revml.contract.pipeline.tokenize_factory(size=33 * 8, dtype=tf.uint8)
         # tokenized
         self._t0 = self._fn(self._x0)
         self._t1 = self._fn(self._x1)
@@ -65,15 +65,15 @@ class DetokenizeTest(tf.test.TestCase):
         self._x1 = tf.convert_to_tensor(self._b1.hex(), dtype=tf.string)
         self._x = tf.convert_to_tensor([self._b0.hex(), self._b1.hex()], dtype=tf.string)
         # fn
-        self._fn = revml.contract.decoder.pipeline.tokenize_factory(size=33 * 8, dtype=tf.uint8)
+        self._fn = revml.contract.pipeline.tokenize_factory(size=33 * 8, dtype=tf.uint8)
         # tokenized
         self._t0 = self._fn(self._x0)
         self._t1 = self._fn(self._x1)
         self._t = self._fn(self._x)
         # detokenized
-        self._d0 = revml.contract.decoder.pipeline.detokenize(self._t0)
-        self._d1 = revml.contract.decoder.pipeline.detokenize(self._t1)
-        self._d = revml.contract.decoder.pipeline.detokenize(self._t)
+        self._d0 = revml.contract.pipeline.detokenize(self._t0)
+        self._d1 = revml.contract.pipeline.detokenize(self._t1)
+        self._d = revml.contract.pipeline.detokenize(self._t)
 
     def test_metadata(self):
         assert list(self._d0.shape) == []
@@ -101,8 +101,8 @@ class PreprocessTest(tf.test.TestCase):
         # encoder model
         self._encoder = tokun.model.AutoEncoder(token_dim=[4, 4, 4], input_dim=256, embedding_dim=256, output_dim=8, output='binary')
         # specialized preprocessing fn
-        self._preprocess_categorical = revml.contract.decoder.pipeline.preprocess_factory(decoder_config=self._config_decoder_categorical, encoder_config=self._config_encoder, encoder_model=None)
-        self._preprocess_binary = revml.contract.decoder.pipeline.preprocess_factory(decoder_config=self._config_decoder_binary, encoder_config=self._config_encoder, encoder_model=self._encoder._encoder)
+        self._preprocess_categorical = revml.contract.pipeline.preprocess_factory(decoder_config=self._config_decoder_categorical, encoder_config=self._config_encoder, encoder_model=None)
+        self._preprocess_binary = revml.contract.pipeline.preprocess_factory(decoder_config=self._config_decoder_binary, encoder_config=self._config_encoder, encoder_model=self._encoder._encoder)
         # original dataset
         __b0 = b'3d602d80600a3d3981f3363d3d373d3d3d363d7339778bc77bd7a9456655b19fd4c5d0bf2071104e5af43d82803e903d91602b57fd5bf3'
         __b1 = b'7f602036038060203d373d3d3d923d343d355af13d82803e903d91601e57fd5bf33d5260203df3'
