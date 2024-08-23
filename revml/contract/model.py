@@ -7,7 +7,7 @@ import tensorflow as tf
 
 import tokun.model
 
-import revml.contract.decoder.layers
+import revml.contract.layers
 
 # CONSTANTS ###################################################################
 

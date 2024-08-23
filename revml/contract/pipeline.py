@@ -20,7 +20,7 @@ def offset(data: tf.Tensor, ticks: int=1) -> tf.Tensor:
 
 # MASK ########################################################################
 
-def mask(data: tf.Tensor, group: int, padding_value: float=0., padding_weight: float=0., data_weight: float=1., dtype: tf.dtypes.DType=tf.float32) -> tf.Tensor:
+def mask(data: tf.Tensor, padding_value: float=0., padding_weight: float=0., data_weight: float=1., dtype: tf.dtypes.DType=tf.float32) -> tf.Tensor:
     # byte level mask
     __weights = tf.not_equal(data, padding_value)
     # instruction level mask, but expressed byte by byte
@@ -42,7 +42,7 @@ def _tokenize_instruction(data: bytes) -> list:
     return list(data[:1]) + _tokenize_data(data=data[1:])
 
 def _tokenize_bytecode(data: bytes, size: int) -> list:
-    __tokenized = [__b for __i in revml.contract.decoder.bytecode.iterate_over_instructions(bytecode=data) for __b in _tokenize_instruction(data=__i)]
+    __tokenized = [__b for __i in revml.contract.bytecode.iterate_over_instructions(bytecode=data) for __b in _tokenize_instruction(data=__i)]
     return __tokenized[:size] + (size - len(__tokenized)) * [0]
 
 def _tokenize_scalar(data: tf.Tensor, size: int, dtype: tf.dtypes.DType=tf.int32) -> tf.Tensor:
@@ -64,9 +64,9 @@ def tokenize_factory(size: int, dtype: tf.dtypes.DType=tf.int32) -> callable:
 
 def _detokenize_instruction(data: list) -> str:
     __opcode = data[0]
-    __length = revml.contract.decoder.bytecode.data_length(__opcode)
+    __length = revml.contract.bytecode.data_length(__opcode)
     __data = data[len(data) - __length:]
-    return bytes([__opcode] + __data).hex() # if (__opcode > 0) else '' # skip the padding
+    return bytes([__opcode] + __data).hex() if (__opcode > 0) else '' # skip the padding
 
 def _detokenize_bytecode(data: list) -> str:
     __instructions = chunk(seq=data, size=33, repeats= True)
@@ -145,7 +145,7 @@ def _formatter_factory(decoder_config: dict, encoder_config: dict) -> callable:
 
 def _masker_factory(decoder_config: dict) -> callable:
     def __masker(inputs: tf.Tensor) -> tf.Tensor:
-        return mask(data=inputs, group=33, padding_value=0, data_weight=1., padding_weight=decoder_config['padding_weight'], dtype=tf.float32)
+        return mask(data=inputs, padding_value=0., data_weight=1., padding_weight=decoder_config['padding_weight'], dtype=tf.float32)
     # customized fn
     return __masker
 
