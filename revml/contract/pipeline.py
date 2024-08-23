@@ -24,7 +24,7 @@ def mask(data: tf.Tensor, padding_value: float=0., padding_weight: float=0., dat
     # byte level mask
     __weights = tf.not_equal(data, padding_value)
     # instruction level mask, but expressed byte by byte
-    __weights = mlable.ops.reduce_any(data=__weights, group=None, axis=-1, keepdims=True)
+    __weights = mlable.ops.reduce_any(data=__weights, group=None, axis=-1, keepdims=False)
     # cast from bool to allow multiplications
     __weights = tf.cast(__weights, dtype=dtype)
     # rescale the weights
@@ -88,10 +88,10 @@ def _preprocess(inputs: tf.Tensor, parser: callable, encoder: callable, embedder
     __inputs, __contexts, __targets = parser(inputs=inputs)
     # encode / tokenize
     __inputs, __contexts, __targets = encoder(inputs=__inputs, contexts=__contexts, targets=__targets)
-    # embed with tokun
-    __inputs, __contexts, __targets = embedder(inputs=__inputs, contexts=__contexts, targets=__targets)
     # enforce types + shapes
     __inputs, __contexts, __targets = formatter(inputs=__inputs, contexts=__contexts, targets=__targets)
+    # embed with tokun
+    __inputs, __contexts, __targets = embedder(inputs=__inputs, contexts=__contexts, targets=__targets)
     # sequence mask to ignore padding during training
     __weights = masker(inputs=__inputs)
     # pack both sourcecode and bytecode into the model inputs
@@ -117,6 +117,21 @@ def _encoder_factory(decoder_config: dict, encoder_config: dict) -> callable:
     # customized fn
     return __encoder
 
+def _formatter_factory(decoder_config: dict, encoder_config: dict) -> callable:
+    # enforce types
+    __cast_i = functools.partial(tf.cast, dtype=tf.float32)
+    __cast_c = functools.partial(tf.cast, dtype=tf.float32)
+    __cast_t = functools.partial(tf.cast, dtype=tf.float32)
+    # enforce shapes
+    __reshape_i = functools.partial(tf.reshape, shape=(decoder_config['batch_dim'], (decoder_config['sample_dim'])))
+    __reshape_c = functools.partial(tf.reshape, shape=(encoder_config['batch_dim'], (encoder_config['sample_dim'] // 4)))
+    __reshape_t = functools.partial(tf.reshape, shape=(decoder_config['batch_dim'], (decoder_config['sample_dim'])))
+    # chain the operations
+    def __formatter(inputs: tf.Tensor, contexts: tf.Tensor, targets: tf.Tensor) -> tuple:
+        return (__cast_i(__reshape_i(inputs)), __cast_c(__reshape_c(contexts)), __cast_t(__reshape_t(targets)))
+    # customized fn
+    return __formatter
+
 def _embedder_factory(decoder_config: dict, encoder_config: dict) -> callable:
     # group bytecode instructions => embeddings
     __embed_i = tokun.model.Tokun(token_dim=decoder_config['token_dim'], input_dim=decoder_config['input_dim'], output_dim=decoder_config['output_dim'], sequence_axis=decoder_config['sequence_axis'], feature_axis=decoder_config['feature_axis'])
@@ -127,21 +142,6 @@ def _embedder_factory(decoder_config: dict, encoder_config: dict) -> callable:
         return (__embed_i._encoder(inputs), __embed_c._encoder(contexts), __embed_i._encoder(targets))
     # customized fn
     return __embedder
-
-def _formatter_factory(decoder_config: dict, encoder_config: dict) -> callable:
-    # enforce types
-    __cast_i = functools.partial(tf.cast, dtype=tf.float32)
-    __cast_c = functools.partial(tf.cast, dtype=tf.float32)
-    __cast_t = functools.partial(tf.cast, dtype=tf.float32)
-    # enforce shapes
-    __reshape_i = functools.partial(tf.reshape, shape=(decoder_config['batch_dim'], (decoder_config['sample_dim'] // decoder_config['token_dim']), decoder_config['token_dim']))
-    __reshape_c = functools.partial(tf.reshape, shape=(encoder_config['batch_dim'], (encoder_config['sample_dim'] // encoder_config['token_dim']), encoder_config['token_dim']))
-    __reshape_t = functools.partial(tf.reshape, shape=(decoder_config['batch_dim'], (decoder_config['sample_dim'] // decoder_config['token_dim']), decoder_config['token_dim']))
-    # chain the operations
-    def __formatter(inputs: tf.Tensor, contexts: tf.Tensor, targets: tf.Tensor) -> tuple:
-        return (__cast_i(__reshape_i(inputs)), __cast_c(__reshape_c(contexts)), __cast_t(__reshape_t(targets)))
-    # customized fn
-    return __formatter
 
 def _masker_factory(decoder_config: dict) -> callable:
     def __masker(inputs: tf.Tensor) -> tf.Tensor:

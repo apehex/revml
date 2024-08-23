@@ -95,14 +95,10 @@ class PreprocessTest(tf.test.TestCase):
     def setUp(self):
         super(PreprocessTest, self).setUp()
         # preprocessing config
-        self._config_encoder = {'batch_dim': 4, 'sample_dim': 4 * 512, 'token_dim': 64, 'embed_dim': 256}
-        self._config_decoder_categorical = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33 * 2, 'output_dim': 256, 'padding_weight': 0.,}
-        self._config_decoder_binary = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33 * 2, 'output_dim': 8, 'padding_weight': 0.,}
-        # encoder model
-        self._encoder = tokun.model.AutoEncoder(token_dim=[4, 4, 4], input_dim=256, embedding_dim=256, output_dim=8, output='binary')
+        self._config_encoder = {'batch_dim': 4, 'sample_dim': 64 * 4 * 128, 'token_dim': 64, 'input_dim': 0x40000, 'output_dim': 0x40000, 'sequence_axis': 1, 'feature_axis': -1, 'output_dtype': tf.int32,}
+        self._config_decoder = {'batch_dim': 4, 'sample_dim': 33 * 4 * 128, 'token_dim': 33 * 4, 'input_dim': 256, 'output_dim': 256, 'sequence_axis': 1, 'feature_axis': -1, 'data_weight': 1.0, 'padding_weight': 0.,}
         # specialized preprocessing fn
-        self._preprocess_categorical = revml.contract.pipeline.preprocess_factory(decoder_config=self._config_decoder_categorical, encoder_config=self._config_encoder, encoder_model=None)
-        self._preprocess_binary = revml.contract.pipeline.preprocess_factory(decoder_config=self._config_decoder_binary, encoder_config=self._config_encoder, encoder_model=self._encoder._encoder)
+        self._preprocess = revml.contract.pipeline.preprocess_factory(decoder_config=self._config_decoder, encoder_config=self._config_encoder)
         # original dataset
         __b0 = b'3d602d80600a3d3981f3363d3d373d3d3d363d7339778bc77bd7a9456655b19fd4c5d0bf2071104e5af43d82803e903d91602b57fd5bf3'
         __b1 = b'7f602036038060203d373d3d3d923d343d355af13d82803e903d91601e57fd5bf33d5260203df3'
@@ -116,61 +112,33 @@ class PreprocessTest(tf.test.TestCase):
             'creation_bytecode': [__b0, __b1, __b2, __b3, __b4, __b5, __b6, __b7,],
             'creation_sourcecode': 8 * [256 * b'a']})
         # preprocessed datasets
-        self._dataset_categorical = self._dataset_before.batch(self._config_decoder_categorical['batch_dim'], drop_remainder=True).map(self._preprocess_categorical)
-        self._dataset_binary = self._dataset_before.batch(self._config_decoder_binary['batch_dim'], drop_remainder=True).map(self._preprocess_binary)
+        self._dataset_after = self._dataset_before.batch(self._config_decoder['batch_dim'], drop_remainder=True).map(self._preprocess)
 
     def test_specs(self):
-        __inputs_spec, __targets_spec, __weights_spec = self._dataset_categorical.element_spec
-        self.assertEqual(__inputs_spec.shape, (self._config_decoder_categorical['batch_dim'], self._config_decoder_categorical['sample_dim']))
-        self.assertEqual(__targets_spec.shape, (self._config_decoder_categorical['batch_dim'], self._config_decoder_categorical['sample_dim'], self._config_decoder_categorical['output_dim']))
-        self.assertEqual(__weights_spec.shape, (self._config_decoder_categorical['batch_dim'], self._config_decoder_categorical['sample_dim']))
-        self.assertEqual(__inputs_spec.dtype, tf.dtypes.int32)
-        self.assertEqual(__targets_spec.dtype, tf.dtypes.float32)
-        self.assertEqual(__weights_spec.dtype, tf.dtypes.float32)
-        (__inputs_spec, __contexts_spec), __targets_spec, __weights_spec = self._dataset_binary.element_spec
-        self.assertEqual(__inputs_spec.shape, (self._config_decoder_binary['batch_dim'], self._config_decoder_binary['sample_dim']))
-        self.assertEqual(__contexts_spec.shape, (self._config_encoder['batch_dim'], self._config_encoder['sample_dim'] // self._config_encoder['token_dim'], self._config_encoder['embed_dim']))
-        self.assertEqual(__targets_spec.shape, (self._config_decoder_binary['batch_dim'], self._config_decoder_binary['sample_dim'], self._config_decoder_binary['output_dim']))
-        self.assertEqual(__weights_spec.shape, (self._config_decoder_binary['batch_dim'], self._config_decoder_binary['sample_dim']))
-        self.assertEqual(__inputs_spec.dtype, tf.dtypes.int32)
+        (__inputs_spec, __contexts_spec), __targets_spec, __weights_spec = self._dataset_after.element_spec
+        # shapes
+        self.assertEqual(__inputs_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['token_dim'], self._config_decoder['token_dim']))
+        self.assertEqual(__contexts_spec.shape, (self._config_encoder['batch_dim'], self._config_encoder['sample_dim'] // (4 * self._config_encoder['token_dim']), self._config_encoder['token_dim']))
+        self.assertEqual(__inputs_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['token_dim'], self._config_decoder['token_dim']))
+        self.assertEqual(__weights_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['token_dim']))
+        # types
+        self.assertEqual(__inputs_spec.dtype, tf.dtypes.float32)
         self.assertEqual(__contexts_spec.dtype, tf.dtypes.float32)
         self.assertEqual(__targets_spec.dtype, tf.dtypes.float32)
         self.assertEqual(__weights_spec.dtype, tf.dtypes.float32)
 
     def test_values(self):
-        # categorical
-        __batch = iter(self._dataset_categorical)
-        for _ in range(2):
-            __x, __y, __m = next(__batch)
-            __y = mlable.sampling.categorical(__y)
-            self.assertAllEqual(__x[:, :self._config_decoder_categorical['token_dim']], tf.zeros((self._config_decoder_categorical['batch_dim'], self._config_decoder_categorical['token_dim'])))
-            self.assertAllEqual(__x[:, self._config_decoder_categorical['token_dim']:2 * self._config_decoder_categorical['token_dim']], __y[:, :self._config_decoder_categorical['token_dim']])
-        # binary
-        __batch = iter(self._dataset_binary)
+        __batch = iter(self._dataset_after)
         for _ in range(2):
             (__x, __c), __y, __m = next(__batch)
-            __y = mlable.sampling.binary(__y)
-            self.assertAllEqual(__x[:, :self._config_decoder_categorical['token_dim']], tf.zeros((self._config_decoder_categorical['batch_dim'], self._config_decoder_categorical['token_dim'])))
-            self.assertAllEqual(__x[:, self._config_decoder_categorical['token_dim']:2 * self._config_decoder_categorical['token_dim']], __y[:, :self._config_decoder_categorical['token_dim']])
+            self.assertAllEqual(__x[:, 0, :], tf.zeros((self._config_decoder['batch_dim'], self._config_decoder['token_dim'])))
+            self.assertAllEqual(__x[:, 1, :], __y[:, 0, :])
 
     def test_weights(self):
-        # categorical
-        __batch = iter(self._dataset_categorical)
-        for _ in range(2):
-            __x, __y, __m = next(__batch)
-            __y = mlable.sampling.categorical(__y)
-            __x = tf.cast(__x, dtype=tf.dtypes.int32)
-            __m = tf.cast(__m, dtype=tf.dtypes.int32)
-            assert 0 < tf.reduce_sum(__m).numpy()
-            assert tf.reduce_sum(__m).numpy() < tf.size(__m).numpy()
-            self.assertAllEqual(__x * __m, __x)
-        # binary
-        __batch = iter(self._dataset_binary)
+        __batch = iter(self._dataset_after)
         for _ in range(2):
             (__x, __c), __y, __m = next(__batch)
-            __y = mlable.sampling.binary(__y)
-            __x = tf.cast(__x, dtype=tf.dtypes.int32)
-            __m = tf.cast(__m, dtype=tf.dtypes.int32)
-            assert 0 < tf.reduce_sum(__m).numpy()
+            __m = tf.expand_dims(__m, axis=-1)
+            assert 0. < tf.reduce_sum(__m).numpy()
             assert tf.reduce_sum(__m).numpy() < tf.size(__m).numpy()
             self.assertAllEqual(__x * __m, __x)
