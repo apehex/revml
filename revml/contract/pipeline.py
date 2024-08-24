@@ -30,6 +30,12 @@ def mask(data: tf.Tensor, padding_value: float=0., padding_weight: float=0., dat
     # rescale the weights
     return data_weight * __weights + padding_weight * (1. - __weights)
 
+# BINARIZE ####################################################################
+
+def binarize(data: tf.Tensor, token_dim: int) -> tf.Tensor:
+    __output = mlable.ops.expand_base(data, base=2, depth=8)
+    return mlable.ops.divide(__output, input_axis=-2, output_axis=-1, factor=token_dim, insert=False)
+
 # TOKENIZE ####################################################################
 
 def _tokenize_data(data: bytes) -> list:
@@ -134,12 +140,14 @@ def _formatter_factory(decoder_config: dict, encoder_config: dict) -> callable:
 
 def _embedder_factory(decoder_config: dict, encoder_config: dict) -> callable:
     # group bytecode instructions => embeddings
-    __embed_i = tokun.model.Tokun(token_dim=decoder_config['token_dim'], input_dim=decoder_config['input_dim'], output_dim=decoder_config['output_dim'], sequence_axis=decoder_config['sequence_axis'], feature_axis=decoder_config['feature_axis'])
+    __embed_i = tokun.model.Tokun(**{__k: decoder_config[__k] for __k in ['token_dim', 'input_dim', 'output_dim', 'sequence_axis', 'feature_axis']})._encoder
     # group sourcecode characters => embeddings
-    __embed_c = tokun.model.Tokun(token_dim=encoder_config['token_dim'], input_dim=encoder_config['input_dim'], output_dim=encoder_config['output_dim'], sequence_axis=encoder_config['sequence_axis'], feature_axis=encoder_config['feature_axis'])
+    __embed_c = tokun.model.Tokun(**{__k: encoder_config[__k] for __k in ['token_dim', 'input_dim', 'output_dim', 'sequence_axis', 'feature_axis']})._encoder
+    # decompose byte values in base 2
+    __embed_t = functools.partial(binarize, token_dim=decoder_config['token_dim']) if decoder_config.get('binary', True) else __embed_i
     # embed all
     def __embedder(inputs: tf.Tensor, contexts: tf.Tensor, targets: tf.Tensor) -> tuple:
-        return (__embed_i._encoder(inputs), __embed_c._encoder(contexts), __embed_i._encoder(targets))
+        return (__embed_i(inputs), __embed_c(contexts), __embed_t(targets))
     # customized fn
     return __embedder
 
