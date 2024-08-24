@@ -96,7 +96,7 @@ class PreprocessTest(tf.test.TestCase):
         super(PreprocessTest, self).setUp()
         # preprocessing config
         self._config_encoder = {'batch_dim': 4, 'sample_dim': 64 * 4 * 128, 'token_dim': 64, 'input_dim': 0x40000, 'output_dim': 0x40000, 'sequence_axis': 1, 'feature_axis': -1, 'output_dtype': tf.int32,}
-        self._config_decoder = {'batch_dim': 4, 'sample_dim': 33 * 4 * 128, 'token_dim': 33 * 4, 'input_dim': 256, 'output_dim': 256, 'sequence_axis': 1, 'feature_axis': -1, 'data_weight': 1.0, 'padding_weight': 0.,}
+        self._config_decoder = {'batch_dim': 4, 'sample_dim': 33 * 4 * 128, 'token_dim': 33 * 4, 'input_dim': 256, 'output_dim': 256, 'sequence_axis': 1, 'feature_axis': -1, 'data_weight': 1.0, 'padding_weight': 0., 'binary': False,}
         # specialized preprocessing fn
         self._preprocess = revml.contract.pipeline.preprocess_factory(decoder_config=self._config_decoder, encoder_config=self._config_encoder)
         # original dataset
@@ -119,7 +119,7 @@ class PreprocessTest(tf.test.TestCase):
         # shapes
         self.assertEqual(__inputs_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['token_dim'], self._config_decoder['token_dim']))
         self.assertEqual(__contexts_spec.shape, (self._config_encoder['batch_dim'], self._config_encoder['sample_dim'] // (4 * self._config_encoder['token_dim']), self._config_encoder['token_dim']))
-        self.assertEqual(__inputs_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['token_dim'], self._config_decoder['token_dim']))
+        self.assertEqual(__targets_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['token_dim'], self._config_decoder['token_dim']))
         self.assertEqual(__weights_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['token_dim']))
         # types
         self.assertEqual(__inputs_spec.dtype, tf.dtypes.float32)
