@@ -24,12 +24,8 @@ class SelfTransformer(tf.keras.models.Model):
         embed_dim: int,
         head_dim: int,
         hidden_dim: int,
-        input_dim: int=256,
-        output_dim: int=8,
-        token_dim: list=[33],
+        output_dim: int,
         epsilon: float=EPSILON,
-        activation: str='gelu',
-        output: str='binary',
         **kwargs
     ) -> None:
         # init
@@ -41,16 +37,12 @@ class SelfTransformer(tf.keras.models.Model):
             'embed_dim': embed_dim,
             'head_dim': head_dim,
             'hidden_dim': hidden_dim,
-            'input_dim': input_dim,
             'output_dim': output_dim,
-            'token_dim': token_dim,
-            'epsilon': epsilon,
-            'activation': activation,
-            'output': output,}
+            'epsilon': epsilon,}
         # layers
-        self._encoder = tokun.model.Encoder(token_dim=token_dim, encoding_dim=input_dim, embedding_dim=embed_dim, sequence_axis=1, feature_axis=-1, activation=activation, name='encoder')
+        self._tail = tf.keras.layers.Dense(units=embed_dim, activation='sigmoid', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', name='tail')
         self._blocks = [
-            revml.contract.decoder.layers.SelfDecoderBlock(
+            revml.contract.layers.SelfDecoderBlock(
                 num_heads=num_heads,
                 embed_dim=embed_dim,
                 head_dim=head_dim,
@@ -59,15 +51,14 @@ class SelfTransformer(tf.keras.models.Model):
                 epsilon=epsilon,
                 name='block-{}'.format(__i))
             for __i in range(num_layers)]
-        self._decoder = tokun.model.Decoder(token_dim=token_dim[::-1], encoding_dim=output_dim, embedding_dim=embed_dim, sequence_axis=1, feature_axis=-1, activation=activation, output=output, name='decoder')
+        self._head = tf.keras.layers.Dense(units=output_dim, activation='sigmoid', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', name='head')
 
     def call(self, inputs: tf.Tensor, attention_mask: tf.Tensor=None, **kwargs) -> tf.Tensor:
-        # compress the inputs
-        __y = self._encoder(inputs)
+        __y = self._tail(inputs)
         # blocks
         __y = functools.reduce(lambda __x, __b: __b(inputs=__x, attention_mask=attention_mask, **kwargs), self._blocks, __y)
         # decompress
-        return self._decoder(__y)
+        return self._head(__y)
 
     def get_config(self) -> dict:
         __config = super(SelfTransformer, self).get_config()
@@ -89,12 +80,8 @@ class CrossTransformer(tf.keras.models.Model):
         embed_dim: int,
         head_dim: int,
         hidden_dim: int,
-        input_dim: int=256,
-        output_dim: int=8,
-        token_dim: list=[33],
+        output_dim: int,
         epsilon: float=EPSILON,
-        activation: str='gelu',
-        output: str='binary',
         **kwargs
     ) -> None:
         # init
@@ -106,16 +93,12 @@ class CrossTransformer(tf.keras.models.Model):
             'embed_dim': embed_dim,
             'head_dim': head_dim,
             'hidden_dim': hidden_dim,
-            'input_dim': input_dim,
             'output_dim': output_dim,
-            'token_dim': token_dim,
-            'epsilon': epsilon,
-            'activation': activation,
-            'output': output,}
+            'epsilon': epsilon,}
         # layers
-        self._encoder = tokun.model.Encoder(token_dim=token_dim, encoding_dim=input_dim, embedding_dim=embed_dim, sequence_axis=1, feature_axis=-1, activation=activation, name='encoder')
+        self._tail = tf.keras.layers.Dense(units=embed_dim, activation='sigmoid', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', name='tail')
         self._blocks = [
-            revml.contract.decoder.layers.CrossDecoderBlock(
+            revml.contract.layers.CrossDecoderBlock(
                 num_heads=num_heads,
                 embed_dim=embed_dim,
                 head_dim=head_dim,
@@ -124,17 +107,17 @@ class CrossTransformer(tf.keras.models.Model):
                 epsilon=epsilon,
                 name='block-{}'.format(__i))
             for __i in range(num_layers)]
-        self._decoder = tokun.model.Decoder(token_dim=token_dim[::-1], encoding_dim=output_dim, embedding_dim=embed_dim, sequence_axis=1, feature_axis=-1, activation=activation, output=output, name='decoder')
+        self._head = tf.keras.layers.Dense(units=output_dim, activation='sigmoid', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', name='head')
 
     def call(self, inputs: tuple, attention_mask: tf.Tensor=None, **kwargs) -> tf.Tensor:
         # unpack
         __inputs, __contexts = inputs
-        # compress the inputs
-        __y = self._encoder(__inputs)
+        # embed
+        __y = self._tail(__inputs)
         # blocks
         __y = functools.reduce(lambda __x, __b: __b(inputs=__x, contexts=__contexts, attention_mask=attention_mask, **kwargs), self._blocks, __y)
         # decompress
-        return self._decoder(__y)
+        return self._head(__y)
 
     def get_config(self) -> dict:
         __config = super(CrossTransformer, self).get_config()
