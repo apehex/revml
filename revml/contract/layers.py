@@ -34,8 +34,8 @@ class SelfDecoderBlock(tf.keras.layers.Layer):
             'sequence_axis': sequence_axis,
             'epsilon': epsilon,}
         # layers
-        self._attention = mlable.blocks.transformer.SelfAttentionBlock(num_heads=num_heads, head_dim=head_dim, sequence_axis=sequence_axis, epsilon=epsilon)
-        self._ffn = mlable.blocks.transformer.FeedForwardBlock(embed_dim=embed_dim, hidden_dim=hidden_dim, epsilon=epsilon)
+        self._attention = mlable.blocks.transformer.SelfAttentionBlock(num_heads=num_heads, head_dim=head_dim, sequence_axis=sequence_axis, epsilon=epsilon, center=False, scale=False)
+        self._ffn = mlable.blocks.transformer.FeedForwardBlock(embed_dim=embed_dim, hidden_dim=hidden_dim, epsilon=epsilon, center=False, scale=False)
 
     def call(
         self,
@@ -82,9 +82,9 @@ class CrossDecoderBlock(tf.keras.layers.Layer):
             'sequence_axis': sequence_axis,
             'epsilon': epsilon,}
         # layers
-        self._self_attention = mlable.blocks.transformer.SelfAttentionBlock(num_heads=num_heads, head_dim=head_dim, sequence_axis=sequence_axis, epsilon=epsilon)
-        self._cross_attention = mlable.blocks.transformer.CrossAttentionBlock(num_heads=num_heads, head_dim=head_dim, sequence_axis=sequence_axis, epsilon=epsilon)
-        self._ffn = mlable.blocks.transformer.FeedForwardBlock(embed_dim=embed_dim, hidden_dim=hidden_dim, epsilon=epsilon)
+        self._self_attention = mlable.blocks.transformer.SelfAttentionBlock(num_heads=num_heads, head_dim=head_dim, sequence_axis=sequence_axis, epsilon=epsilon, center=False, scale=False)
+        self._cross_attention = mlable.blocks.transformer.CrossAttentionBlock(num_heads=num_heads, head_dim=head_dim, sequence_axis=sequence_axis, epsilon=epsilon, center=False, scale=False)
+        self._ffn = mlable.blocks.transformer.FeedForwardBlock(embed_dim=embed_dim, hidden_dim=hidden_dim, epsilon=epsilon, center=False, scale=False)
 
     def call(
         self,
