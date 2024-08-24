@@ -11,9 +11,9 @@ import revml.contract.model
 
 # PREPROCESSING ###############################################################
 
-class CrossTransformerTest(tf.test.TestCase):
+class TransformerTest(tf.test.TestCase):
     def setUp(self):
-        super(CrossTransformerTest, self).setUp()
+        super(TransformerTest, self).setUp()
         # preprocessing config
         self._config_encoder = {'batch_dim': 4, 'sample_dim': 64 * 4 * 128, 'token_dim': 64, 'input_dim': 0x40000, 'output_dim': 0x40000, 'sequence_axis': 1, 'feature_axis': -1, 'output_dtype': tf.int32,}
         self._config_decoder = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33, 'input_dim': 256, 'output_dim': 256, 'sequence_axis': 1, 'feature_axis': -1, 'data_weight': 1.0, 'padding_weight': 0.,}
@@ -35,7 +35,7 @@ class CrossTransformerTest(tf.test.TestCase):
         # preprocessed datasets
         self._dataset_after = self._dataset_before.batch(self._config_decoder['batch_dim'], drop_remainder=True).map(self._preprocess)
         # transformer
-        self._model = revml.contract.model.CrossTransformer(**self._config_model)
+        self._model = revml.contract.model.Transformer(**self._config_model)
         # build
         __x = tf.zeros([self._config_decoder['batch_dim'], (self._config_decoder['sample_dim'] // self._config_decoder['token_dim']), self._config_decoder['token_dim']], dtype=tf.float32)
         __c = tf.zeros([self._config_encoder['batch_dim'], (self._config_encoder['sample_dim'] // (4 * self._config_encoder['token_dim'])), self._config_encoder['token_dim']], dtype=tf.float32)
