@@ -9,15 +9,15 @@ import tokun.model
 import revml.contract.pipeline
 import revml.contract.model
 
-# PREPROCESSING ###############################################################
+# RAW PREDICTIONS #############################################################
 
-class TransformerTest(tf.test.TestCase):
+class RawTransformerTest(tf.test.TestCase):
     def setUp(self):
-        super(TransformerTest, self).setUp()
+        super(RawTransformerTest, self).setUp()
         # preprocessing config
         self._config_encoder = {'batch_dim': 4, 'sample_dim': 64 * 4 * 128, 'token_dim': 64, 'input_dim': 0x40000, 'output_dim': 0x40000, 'sequence_axis': 1, 'feature_axis': -1, 'output_dtype': tf.int32,}
-        self._config_decoder = {'batch_dim': 4, 'sample_dim': 33 * 128, 'token_dim': 33, 'input_dim': 256, 'output_dim': 256, 'sequence_axis': 1, 'feature_axis': -1, 'data_weight': 1.0, 'padding_weight': 0., 'binary': False,}
-        self._config_model = {'num_layers': 4, 'num_heads': 4, 'embed_dim': 64, 'head_dim': 16, 'hidden_dim': 256,  'output_dim': 33 * 8,}
+        self._config_decoder = {'batch_dim': 4, 'sample_dim': 33 * 4 * 128, 'token_dim': 33 * 4, 'input_dim': 256, 'output_dim': 256, 'sequence_axis': 1, 'feature_axis': -1, 'data_weight': 1.0, 'padding_weight': 0., 'binary': False,}
+        self._config_model = {'num_layers': 4, 'num_heads': 4, 'embed_dim': 64, 'head_dim': 16, 'hidden_dim': 256,  'output_dim': 33 * 4,}
         # specialized preprocessing fn
         self._preprocess = revml.contract.pipeline.preprocess_factory(decoder_config=self._config_decoder, encoder_config=self._config_encoder)
         # original dataset
@@ -68,7 +68,7 @@ class TransformerTest(tf.test.TestCase):
         assert all(list(__b._ffn._ffn._output.kernel.shape) == [self._config_model['hidden_dim'], self._config_model['embed_dim']] for __b in self._model._blocks)
         # head
         assert list(self._model._head.kernel.shape) == [self._config_model['embed_dim'], self._config_model['output_dim']]
-        assert list(self._model._head.bias.shape) == [self._config_model['output_dim']]
+        # assert list(self._model._head.bias.shape) == [self._config_model['output_dim']]
 
     def test_shapes(self):
         __batch = iter(self._dataset_after)

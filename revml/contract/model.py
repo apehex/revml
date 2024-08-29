@@ -51,7 +51,7 @@ class Transformer(tf.keras.models.Model):
                 epsilon=epsilon,
                 name='block-{}'.format(__i))
             for __i in range(num_layers)]
-        self._head = tf.keras.layers.Dense(units=output_dim, activation='sigmoid', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', name='head')
+        self._head = tf.keras.layers.Dense(units=output_dim, activation='sigmoid', use_bias=False, kernel_initializer='glorot_uniform', bias_initializer='zeros', name='head')
 
     def call(self, inputs: tuple, attention_mask: tf.Tensor=None, **kwargs) -> tf.Tensor:
         # unpack
