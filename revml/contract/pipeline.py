@@ -106,7 +106,7 @@ def _encoder_factory(decoder_config: dict, encoder_config: dict) -> callable:
     # bytecode encoding (33 bytes / instruction)
     __encode_i = tokenize_factory(size=decoder_config['sample_dim'], dtype=tf.int32)
     # text encoding (UTF-32-BE)
-    __encode_c = functools.partial(tokun.pipeline.encode, token_size=encoder_config['token_dim'], sample_size=encoder_config['sample_dim'], output_dtype=encoder_config['output_dtype'])
+    __encode_c = functools.partial(tokun.pipeline.encode, token_size=encoder_config['token_dim'], sample_size=encoder_config['sample_dim'], output_dtype=encoder_config.get('output_dtype', tf.uint8))
     # encode all
     def __encoder(inputs: tf.Tensor, contexts: tf.Tensor, targets: tf.Tensor) -> tuple:
         return (__encode_i(inputs), __encode_c(contexts), __encode_i(targets))
@@ -115,7 +115,7 @@ def _encoder_factory(decoder_config: dict, encoder_config: dict) -> callable:
 
 def _formatter_factory(decoder_config: dict, encoder_config: dict) -> callable:
     # length of each encoded value in bytes
-    __factor = 4 if encoder_config.get('output_dtype', tf.int32) == tf.int32 else 1
+    __factor = 4 if encoder_config.get('output_dtype', tf.uint8) == tf.int32 else 1
     # enforce types
     __cast_i = functools.partial(tf.cast, dtype=tf.float32)
     __cast_c = functools.partial(tf.cast, dtype=tf.float32)
@@ -149,7 +149,7 @@ def _embedder_factory(decoder_config: dict, encoder_config: dict) -> callable:
 
 def _masker_factory(decoder_config: dict) -> callable:
     def __masker(inputs: tf.Tensor) -> tf.Tensor:
-        return mask(data=inputs, padding_value=0., data_weight=1., padding_weight=decoder_config['padding_weight'], dtype=tf.float32)
+        return mask(data=inputs, padding_value=0., data_weight=decoder_config.get('data_weight', 1.0), padding_weight=decoder_config.get('padding_weight', 0.0), dtype=tf.float32)
     # customized fn
     return __masker
 
