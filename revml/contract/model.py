@@ -56,7 +56,9 @@ class Transformer(tf.keras.models.Model):
                 name='block-{}'.format(__i))
             for __i in range(num_layers)]
         # 8 bits for each input byte
-        self._head = tf.keras.layers.Dense(units=8 * input_dim, activation='sigmoid', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', name='head')
+        self._project = tf.keras.layers.Dense(units=8 * input_dim, activation='sigmoid', use_bias=False, kernel_initializer='glorot_uniform', bias_initializer='zeros', name='project')
+        # group by token
+        self._divide = mlable.layers.reshaping.Divide(input_axis=-2, output_axis=-1, factor=8, insert=True, name='divide')
 
     def call(self, inputs: tuple, attention_mask: tf.Tensor=None, **kwargs) -> tf.Tensor:
         # unpack
@@ -67,7 +69,7 @@ class Transformer(tf.keras.models.Model):
         # blocks
         __y = functools.reduce(lambda __x, __b: __b(inputs=__x, contexts=__c, attention_mask=attention_mask, **kwargs), self._blocks, __y)
         # decompress
-        return self._head(__y)
+        return self._divide(self._project(__y))
 
     def get_config(self) -> dict:
         __config = super(Transformer, self).get_config()
