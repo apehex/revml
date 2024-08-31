@@ -53,6 +53,11 @@ class TokenizeTest(tf.test.TestCase):
         # the last instruction is not a push => null data
         self.assertAllEqual(self._t0[-32:], tf.zeros((32,)))
         self.assertAllEqual(self._t1[-32:], tf.zeros((32,)))
+        # all the values are bytes
+        self.assertAllGreaterEqual(self._t0, 0)
+        self.assertAllGreaterEqual(self._t1, 0)
+        self.assertAllLess(self._t0, 256)
+        self.assertAllLess(self._t1, 256)
 
 # DETOKENIZATION ##############################################################
 
@@ -137,6 +142,11 @@ class PreprocessBinaryBytesTest(tf.test.TestCase):
             # the target should now have the same format as the inputs
             self.assertAllEqual(__x[:, 0, :], tf.zeros((self._config_decoder['batch_dim'], self._config_decoder['input_dim'])))
             self.assertAllEqual(__x[:, 1:, :], __y[:, :-1, :])
+            # all the values are bytes
+            self.assertAllGreaterEqual(__x, 0)
+            self.assertAllGreaterEqual(__y, 0)
+            self.assertAllLess(__x, 256)
+            self.assertAllLess(__y, 256)
 
     def test_weights(self):
         __batch = iter(self._dataset_after)
