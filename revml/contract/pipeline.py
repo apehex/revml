@@ -128,9 +128,10 @@ def _formatter_factory(decoder_config: dict, encoder_config: dict) -> callable:
     return __formatter
 
 def _embedder_factory() -> callable:
+    __binarize = functools.partial(mlable.ops.expand_base, base=2, depth=8)
     # 8 probability bits / instruction byte
     def __embedder(inputs: tf.Tensor, contexts: tf.Tensor, targets: tf.Tensor) -> tuple:
-        return (inputs, contexts, binarize(targets))
+        return (inputs, contexts, __binarize(targets))
     # customized fn
     return __embedder
 
