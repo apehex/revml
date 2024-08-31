@@ -5,7 +5,7 @@ import functools
 import keras
 import tensorflow as tf
 
-import tokun.model
+import mlable.layers.embedding
 
 import revml.contract.layers
 
