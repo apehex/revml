@@ -38,6 +38,14 @@ class DecoderBlock(tf.keras.layers.Layer):
         self._cross_attention = mlable.blocks.transformer.CrossAttentionBlock(num_heads=num_heads, head_dim=head_dim, sequence_axis=sequence_axis, epsilon=epsilon, center=False, scale=False)
         self._ffn = mlable.blocks.transformer.FeedForwardBlock(embed_dim=embed_dim, hidden_dim=hidden_dim, epsilon=epsilon, center=False, scale=False)
 
+    def build(self, inputs_shape: tf.TensorShape, contexts_shape: tf.TensorShape) -> None:
+        # propagate the shapes trhough the child layers
+        self._self_attention.build(inputs_shape)
+        self._cross_attention.build(inputs_shape=inputs_shape, contexts_shape=contexts_shape)
+        self._ffn.build(inputs_shape)
+        # register
+        self.built = True
+
     def call(
         self,
         inputs: tf.Tensor,
@@ -58,5 +66,5 @@ class DecoderBlock(tf.keras.layers.Layer):
         return __config
 
     @classmethod
-    def from_config(cls, config) -> tf.keras.layers.Layer:
+    def from_config(cls, config: dict) -> tf.keras.layers.Layer:
         return cls(**config)
