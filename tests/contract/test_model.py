@@ -73,7 +73,7 @@ class BinaryTransformerTest(tf.test.TestCase):
         __batch = iter(self._dataset_after)
         for _ in range(2):
             (__x, __c), __t, __w = next(__batch)
-            assert list(self._model((__x, __c)).shape) == [self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['input_dim'], self._config_model['input_dim'], 8]
+            assert list(self._model((__x, __c)).shape) == [self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['input_dim'], 8 * self._config_model['input_dim']]
             assert list(self._model((__x, __c)).shape) == list(__t.shape)
 
     def test_null_values(self):

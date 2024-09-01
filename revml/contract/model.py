@@ -57,8 +57,6 @@ class Transformer(tf.keras.models.Model):
             for __i in range(num_layers)]
         # 8 bits for each input byte
         self._project = tf.keras.layers.Dense(units=8 * input_dim, activation='sigmoid', use_bias=False, kernel_initializer='glorot_uniform', bias_initializer='zeros', name='project')
-        # group by token
-        self._divide = mlable.layers.reshaping.Divide(input_axis=-2, output_axis=-1, factor=8, insert=True, name='divide')
 
     def build(self, inputs_shape: tf.TensorShape) -> None:
         __inputs_shape, __contexts_shape = inputs_shape
@@ -72,8 +70,6 @@ class Transformer(tf.keras.models.Model):
         # propagate the shapes through the child layers
         for __b in self._blocks: __b.build(inputs_shape=__inputs_shape, contexts_shape=__contexts_shape)
         self._project.build(__inputs_shape)
-        # the reshaping layers have no state
-        self._divide.build(None)
         # register
         self.built = True
 
@@ -86,7 +82,7 @@ class Transformer(tf.keras.models.Model):
         # blocks
         __y = functools.reduce(lambda __x, __b: __b(inputs=__x, contexts=__c, attention_mask=attention_mask, **kwargs), self._blocks, __y)
         # decompress
-        return self._divide(self._project(__y))
+        return self._project(__y)
 
     def get_config(self) -> dict:
         __config = super(Transformer, self).get_config()
