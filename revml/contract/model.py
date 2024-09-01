@@ -60,6 +60,23 @@ class Transformer(tf.keras.models.Model):
         # group by token
         self._divide = mlable.layers.reshaping.Divide(input_axis=-2, output_axis=-1, factor=8, insert=True, name='divide')
 
+    def build(self, inputs_shape: tf.TensorShape) -> None:
+        __inputs_shape, __contexts_shape = inputs_shape
+        __inputs_shape, __contexts_shape = list(__inputs_shape), list(__contexts_shape)
+        # both inputs and contexts have the same feature dimension after embedding
+        __inputs_shape[-1] = self._config['embed_dim']
+        __contexts_shape[-1] = self._config['embed_dim']
+        # the embeddings are entirely defined in the constructor
+        self._embed_input.build()
+        self._embed_context.build()
+        # propagate the shapes through the child layers
+        for __b in self._blocks: __b.build(inputs_shape=__inputs_shape, contexts_shape=__contexts_shape)
+        self._project.build(__inputs_shape)
+        # the reshaping layers have no state
+        self._divide.build()
+        # register
+        self.built = True
+
     def call(self, inputs: tuple, attention_mask: tf.Tensor=None, **kwargs) -> tf.Tensor:
         # unpack
         __inputs, __contexts = inputs
