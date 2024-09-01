@@ -4,6 +4,7 @@ import math
 import tensorflow as tf
 
 import mlable.ops
+import mlable.shaping
 import tokun.pipeline
 
 import revml.contract.bytecode
@@ -37,7 +38,7 @@ def binarize(data: tf.Tensor) -> tf.Tensor:
     #  decompose in base 2
     __output = mlable.ops.expand_base(data, base=2, depth=8)
     # merge all the bits in a single sequence
-    return mlable.ops.merge(__output, left_axis=-2, right_axis=-1, left=True)
+    return mlable.shaping.merge(__output, left_axis=-2, right_axis=-1, left=True)
 
 # TOKENIZE ####################################################################
 
