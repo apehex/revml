@@ -125,7 +125,7 @@ class PreprocessBinaryBytesTest(tf.test.TestCase):
         # shapes
         self.assertEqual(__inputs_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['input_dim'], self._config_decoder['input_dim']))
         self.assertEqual(__contexts_spec.shape, (self._config_encoder['batch_dim'], self._config_encoder['sample_dim'] // self._config_encoder['input_dim'], self._config_encoder['input_dim']))
-        self.assertEqual(__targets_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['input_dim'], 8 * self._config_decoder['input_dim']))
+        self.assertEqual(__targets_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['input_dim'], self._config_decoder['input_dim'], 8))
         self.assertEqual(__weights_spec.shape, (self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['input_dim']))
         # types
         self.assertEqual(__inputs_spec.dtype, tf.dtypes.int32)
@@ -138,7 +138,7 @@ class PreprocessBinaryBytesTest(tf.test.TestCase):
         for _ in range(2):
             (__x, __c), __y, __m = next(__batch)
             # interpret the predictions
-            __y = mlable.sampling.binary(__y, depth=8, threshold=0.5, random=False)
+            __y = mlable.sampling.binary(__y, threshold=0.5, random=False)
             # the target should now have the same format as the inputs
             self.assertAllEqual(__x[:, 0, :], tf.zeros((self._config_decoder['batch_dim'], self._config_decoder['input_dim'])))
             self.assertAllEqual(__x[:, 1:, :], __y[:, :-1, :])
