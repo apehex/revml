@@ -5,15 +5,15 @@ import tensorflow as tf
 
 import mlable.blocks.transformer
 
-# CONSTANTS ###################################################################
+# CONSTANTS ####################################################################
 
 EPSILON = 1e-6
 DROPOUT = 0.0
 
-# ENCODER-DECODER #############################################################
+# TRANSFORMER ##################################################################
 
 @keras.saving.register_keras_serializable(package='blocks')
-class DecoderBlock(tf.keras.layers.Layer):
+class TransformerBlock(tf.keras.layers.Layer):
     def __init__(
         self,
         head_num: int,
@@ -24,7 +24,7 @@ class DecoderBlock(tf.keras.layers.Layer):
         **kwargs
     ) -> None:
         # init
-        super(DecoderBlock, self).__init__(**kwargs)
+        super(TransformerBlock, self).__init__(**kwargs)
         # config
         self._config = {
             'head_num': head_num,
@@ -75,6 +75,7 @@ class DecoderBlock(tf.keras.layers.Layer):
         contexts: tf.Tensor,
         attention_mask: tf.Tensor=None,
         training: bool=False,
+        **kwargs
     ) -> tf.Tensor:
         self._build(inputs_shape=tuple(inputs.shape), contexts_shape=tuple(contexts.shape))
         # residual + cross attention + FFN
@@ -83,7 +84,7 @@ class DecoderBlock(tf.keras.layers.Layer):
         return self._attend_self(query=__outputs, key=__outputs, value=__outputs, attention_mask=attention_mask, training=training, use_causal_mask=True)
 
     def get_config(self) -> dict:
-        __config = super(DecoderBlock, self).get_config()
+        __config = super(TransformerBlock, self).get_config()
         __config.update(self._config)
         return __config
 

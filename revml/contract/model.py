@@ -55,7 +55,7 @@ class Transformer(tf.keras.models.Model):
         self._encoder_context = mlable.layers.embedding.TokunEmbedding(input_dim=256, output_dim=self._config['embed_dim'] // self._config['context_dim'], name='encoder-context')
         # blocks
         self._transformer = [
-            revml.contract.layers.DecoderBlock(
+            revml.contract.layers.TransformerBlock(
                 attention_axes=[1],
                 head_num=self._config['head_num'],
                 expand_rate=self._config['expand_rate'],
