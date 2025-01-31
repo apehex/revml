@@ -7,9 +7,8 @@ readme = ".github/README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.13"
-tensorflow = ">=2.15"
-mlable = {path = "../mlable/", develop = true} # mlable = ">=0.14"
-tokun = {path = "../tokun/", develop = true} # tokun = ">=0.13"
+tensorflow = ">=2.16, <2.19"
+mlable = ">=0.15" # mlable = {path = "../mlable/", develop = true}
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
