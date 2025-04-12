@@ -8,7 +8,7 @@ import mlable.shaping
 import mlable.text
 import mlable.utils
 
-import revml.contract.bytecode
+import revml.bytecode
 
 # OFFSET ######################################################################
 
@@ -47,7 +47,7 @@ def _tokenize_instruction(data: bytes) -> list:
     return list(data[:1]) + _tokenize_data(data=data[1:])
 
 def _tokenize_bytecode(data: bytes, size: int) -> list:
-    __tokenized = [__b for __i in revml.contract.bytecode.iterate_over_instructions(bytecode=data) for __b in _tokenize_instruction(data=__i)]
+    __tokenized = [__b for __i in revml.bytecode.iterate_over_instructions(bytecode=data) for __b in _tokenize_instruction(data=__i)]
     return __tokenized[:size] + (size - len(__tokenized)) * [0]
 
 def _tokenize_scalar(data: tf.Tensor, size: int, dtype: tf.dtypes.DType=tf.int32) -> tf.Tensor:
@@ -69,7 +69,7 @@ def tokenize_factory(size: int, dtype: tf.dtypes.DType=tf.int32) -> callable:
 
 def _detokenize_instruction(data: list) -> str:
     __opcode = data[0]
-    __length = revml.contract.bytecode.data_length(__opcode)
+    __length = revml.bytecode.data_length(__opcode)
     __data = data[len(data) - __length:]
     return bytes([__opcode] + __data).hex() if (__opcode > 0) else '' # skip the padding
 
