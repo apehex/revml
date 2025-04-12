@@ -5,15 +5,10 @@ import tensorflow as tf
 
 import mlable.ops
 import mlable.shaping
-import tokun.pipeline
+import mlable.text
+import mlable.utils
 
 import revml.contract.bytecode
-
-# RESHAPE #####################################################################
-
-def chunk(seq: list, size: int, repeats: bool=True) -> list:
-    __chunks = (seq[__i:__i+size] for __i in range(0, len(seq), size))
-    return list(__chunks if repeats else set(__chunks))
 
 # OFFSET ######################################################################
 
@@ -79,7 +74,7 @@ def _detokenize_instruction(data: list) -> str:
     return bytes([__opcode] + __data).hex() if (__opcode > 0) else '' # skip the padding
 
 def _detokenize_bytecode(data: list) -> str:
-    __instructions = chunk(seq=data, size=33, repeats= True)
+    __instructions = mlable.utils.chunk(seq=data, size=33, repeats= True)
     return ''.join(_detokenize_instruction(__i) for __i in __instructions)
 
 def _detokenize_scalar(data: tf.Tensor) -> tf.Tensor:
@@ -106,7 +101,7 @@ def _encoder_factory(decoder_config: dict, encoder_config: dict) -> callable:
     # bytecode encoding (33 bytes / instruction)
     __encode_i = tokenize_factory(size=decoder_config['sample_dim'], dtype=tf.int32)
     # text encoding (UTF-32-BE)
-    __encode_c = functools.partial(tokun.pipeline.encode, token_size=encoder_config['input_dim'], sample_size=encoder_config['sample_dim'], output_dtype=tf.uint8)
+    __encode_c = functools.partial(mlable.text.encode, token_size=encoder_config['input_dim'], sample_size=encoder_config['sample_dim'], output_dtype=tf.uint8)
     # encode all
     def __encoder(inputs: tf.Tensor, contexts: tf.Tensor, targets: tf.Tensor) -> tuple:
         return (__encode_i(inputs), __encode_c(contexts), __encode_i(targets))
