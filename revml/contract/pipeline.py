@@ -101,7 +101,7 @@ def _encoder_factory(decoder_config: dict, encoder_config: dict) -> callable:
     # bytecode encoding (33 bytes / instruction)
     __encode_i = tokenize_factory(size=decoder_config['sample_dim'], dtype=tf.int32)
     # text encoding (UTF-32-BE)
-    __encode_c = functools.partial(mlable.text.encode, sample_dim=encoder_config['sample_dim'], output_dtype=tf.uint8)
+    __encode_c = functools.partial(mlable.text.encode, sample_dim=encoder_config['sample_dim'], output_dtype=tf.uint8, output_encoding='UTF-8')
     # encode all
     def __encoder(inputs: tf.Tensor, contexts: tf.Tensor, targets: tf.Tensor) -> tuple:
         return (__encode_i(inputs), __encode_c(contexts), __encode_i(targets))

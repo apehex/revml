@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "revml"
-version = "0.6.11"
+version = "0.6.12"
 description = "EVM (de)compiler using NN."
 authors = ["apehex <apehex@protonmail.com>"]
 readme = ".github/README.md"
