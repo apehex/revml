@@ -3,8 +3,8 @@ import math
 
 import tensorflow as tf
 
-import mlable.ops
-import mlable.shaping
+import mlable.maths.ops
+import mlable.shaping.axes
 import mlable.text
 import mlable.utils
 
@@ -21,7 +21,7 @@ def mask(data: tf.Tensor, padding_value: int=0, padding_weight: float=0.0, data_
     # byte level mask
     __weights = tf.not_equal(data, padding_value)
     # instruction level mask, but expressed byte by byte
-    __weights = mlable.ops.reduce_any(data=__weights, group=None, axis=-1, keepdims=False)
+    __weights = mlable.maths.ops.reduce_any(data=__weights, group=None, axis=-1, keepdims=False)
     # cast from bool to allow multiplications
     __weights = tf.cast(__weights, dtype=dtype)
     # rescale the weights
@@ -31,9 +31,9 @@ def mask(data: tf.Tensor, padding_value: int=0, padding_weight: float=0.0, data_
 
 def binarize(data: tf.Tensor) -> tf.Tensor:
     #  decompose in base 2
-    __output = mlable.ops.expand_base(data, base=2, depth=8)
+    __output = mlable.maths.ops.expand_base(data, base=2, depth=8)
     # merge all the bits in a single sequence
-    return mlable.shaping.merge(__output, left_axis=-2, right_axis=-1, left=True)
+    return mlable.shaping.axes.merge(__output, left_axis=-2, right_axis=-1, left=True)
 
 # TOKENIZE ####################################################################
 
