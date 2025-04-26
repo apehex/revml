@@ -3,7 +3,7 @@ import math
 
 import tensorflow as tf
 
-import mlable.shaping
+import mlable.shapes
 import tokun.model
 
 import revml.contract.pipeline
@@ -80,11 +80,11 @@ class BinaryTransformerTest(tf.test.TestCase):
         # embed inputs
         __x = tf.zeros([self._config_decoder['batch_dim'], self._config_decoder['sample_dim'], self._config_decoder['input_dim']], dtype=tf.int32)
         __y = self._model._embed_input(__x)
-        __z = tf.tile(__y[:, :1, :], mlable.shaping.filter_shape(__y.shape, axes=[1])) # repeat first feature vector
+        __z = tf.tile(__y[:, :1, :], mlable.shapes.filter(__y.shape, axes=[1])) # repeat first feature vector
         # embed contexts
         __x = tf.zeros([self._config_encoder['batch_dim'], self._config_encoder['sample_dim'], self._config_encoder['input_dim']], dtype=tf.int32)
         __y = self._model._embed_context(__x)
-        __z = tf.tile(__y[:, :1, :], mlable.shaping.filter_shape(__y.shape, axes=[1])) # repeat first feature vector
+        __z = tf.tile(__y[:, :1, :], mlable.shapes.filter(__y.shape, axes=[1])) # repeat first feature vector
         # self attention
         __x = tf.zeros([self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['input_dim'], self._config_model['embed_dim']], dtype=tf.float32)
         self.assertAllEqual(self._model._blocks[0]._self_attention(__x), tf.zeros([self._config_decoder['batch_dim'], self._config_decoder['sample_dim'] // self._config_decoder['input_dim'], self._config_model['embed_dim']], dtype=tf.float32))

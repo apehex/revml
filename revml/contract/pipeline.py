@@ -33,7 +33,7 @@ def binarize(data: tf.Tensor) -> tf.Tensor:
     #  decompose in base 2
     __output = mlable.maths.ops.expand_base(data, base=2, depth=8)
     # merge all the bits in a single sequence
-    return mlable.shaping.axes.merge(__output, left_axis=-2, right_axis=-1, left=True)
+    return mlable.shaping.axes.merge(__output, axis=-1, right=False)
 
 # TOKENIZE ####################################################################
 
