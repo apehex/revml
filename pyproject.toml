@@ -1,14 +1,14 @@
 [tool.poetry]
 name = "revml"
-version = "0.6.14"
+version = "0.6.15"
 description = "EVM (de)compiler using NN."
 authors = ["apehex <apehex@protonmail.com>"]
 readme = ".github/README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.13"
-tensorflow = ">=2.16, <2.19"
-mlable = ">=0.19" # mlable = {path = "../mlable/", develop = true}
+tensorflow = ">=2.16, <2.20"
+mlable = ">=0.20" # mlable = {path = "../mlable/", develop = true}
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
